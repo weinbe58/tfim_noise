@@ -136,14 +136,14 @@ def _1d_hamiltonian(yin,yout,J,h):
 	for i in range(L):
 		ip = (i+1)%L
 		im = (i-1)%L
-		yout[i,:]   =  JJ[im]*(yin[im,:] - yin[L+im,:]) + JJ[i]*(yin[ip,:] + yin[L+ip,:])  - yin[i,:]*h[i]	
-		yout[L+i,:] =  yin[L+i,:]*h[i] - (JJ[im]*(yin[L+im,:] - yin[im,:]) + JJ[i]*(yin[L+ip,:] + yin[ip,:])) 
+		yout[i,:]   =  J[im]*(yin[im,:] - yin[L+im,:]) + J[i]*(yin[ip,:] + yin[L+ip,:])  - yin[i,:]*h[i]	
+		yout[L+i,:] =  yin[L+i,:]*h[i] - (J[im]*(yin[L+im,:] - yin[im,:]) + J[i]*(yin[L+ip,:] + yin[ip,:])) 
 
 def _SE_1d(t,psi_in,psi_out,J_func,h_func):
 	J = -1j*J_func(t)
 	h = -1j*h_func(t)
 	_1d_hamiltonian(psi_in.reshape(psi_out.shape),psi_out,J,h)
-	return yout.ravel()
+	return psi_out.ravel()
 
 
 class TFIM_1d(object):

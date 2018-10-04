@@ -61,7 +61,7 @@ class TFIM_general(object):
 		self.s = s
 		self.s_args = s_args
 
-	def __call__(self,J=-1.0,h=0.0,time=None):
+	def __call__(self,J=1.0,h=0.0,time=None):
 		if time is not None:
 			s = self.s(time,*self.s_args)
 			h = self.A(s)
