@@ -113,7 +113,7 @@ class TFIM_2d(object):
 	def left_iter(self):
 		return iter(self._left_iter)
 
-	def dot(self,psi_i,J,h,psi_out=None):
+	def dot(self,psi_in,J,h,psi_out=None):
 		if psi_out is None:
 			psi_out = psi_in.copy()
 
@@ -127,55 +127,40 @@ class TFIM_2d(object):
 		return evolve(psi_i,ti,tf,_SE_2d,f_params=f_params,**solver_args)
 
 
-"""
+
+
+
 @jit(nopython=True)
-def _1d_hamiltonian(yin,yout,J,h,Nf):
+def _1d_hamiltonian(yin,yout,J,h):
 	L = len(h)
+	for i in range(L):
+		ip = (i+1)%L
+		im = (i-1)%L
+		yout[i,:]   =  JJ[im]*(yin[im,:] - yin[L+im,:]) + JJ[i]*(yin[ip,:] + yin[L+ip,:])  - yin[i,:]*h[i]	
+		yout[L+i,:] =  yin[L+i,:]*h[i] - (JJ[im]*(yin[L+im,:] - yin[im,:]) + JJ[i]*(yin[L+ip,:] + yin[ip,:])) 
 
-	# A
-	for i in range(L):
-		yout[i,:] =  -yin[i,:]*h[i]	
-	for i in range(L):
-		yout[L+i,:] =  yin[L+i,:]*h[i]
-
-	for i in range(L):
-		yout[i,:] +=  yin[ind_p[i],:]*JJ[i]/2.0
-	for i in range(L):
-		yout[L+i,:] -= yin[L+ind_p[i],:]*JJ[i]/2.0
-
-	for i in range(L):
-		yout[i,:] +=  yin[ind_m[i],:]*JJ[j]/2.0
-	for i in range(1,L):
-		yout[L+i,:] -=  yin[L+ind_m[i],:]*JJ[j]/2.0
-
-	# B
-
-	for i in range(L):
-		yout[i,:] +=  yin[L+ind_p[i],:]*JJ[i]/2.0
-	for i in range(L):
-		yout[L+i,:] -= yin[ind_p[i],:]*JJ[i]/2.0
-
-	for i in range(L):
-		yout[i,:] -=  yin[L+ind_m[i],:]*JJ[j]/2.0
-	for i in range(L):
-		yout[L+i,:] += yin[ind_m[i],:]*JJ[j]/2.0	
-
+def _SE_1d(t,psi_in,psi_out,J_func,h_func):
+	J = -1j*J_func(t)
+	h = -1j*h_func(t)
+	_1d_hamiltonian(psi_in.reshape(psi_out.shape),psi_out,J,h)
+	return yout.ravel()
 
 
 class TFIM_1d(object):
 	def __init__(self,L,Nf=0):
-
 		self._L = L
-		self._Nf = Nf
-		ind_p = np.zeros(L)
-		ind_m = np.zeros(L)
-		for i in range(L):
-			ind_p[i] = (i+1)%L
-			ind_m[i] = (i-1)%L
+		self._psi_out = np.zeros((2*L,L),dtype=np.complex128)
 
+	def dot(self,psi_in,J,h,psi_out=None):
+		if psi_out is None:
+			psi_out = psi_in.copy()
+
+		_1d_hamiltonian(psi_in,psi_out,J,h)
+
+		return psi_out
 
 	def anneal(self,psi_i,ti,tf,J_func,h_func,**solver_args):
-		f_params = (self._psi_out,self._diag_signs,self._diag,J_func,h_func)
+		f_params = (self._psi_out,J_func,h_func)
 		return evolve(psi_i,ti,tf,_SE_1d,f_params=f_params,**solver_args)
 
-"""
+

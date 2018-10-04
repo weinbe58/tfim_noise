@@ -1,0 +1,1 @@
+from .TFIM_1d_general import *

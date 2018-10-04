@@ -1,4 +1,4 @@
-from tfim_module import TFIM_2d
+from tfim_module import TFIM_1d
 from noise_model import fourier_noise,osc_noise
 import numpy as np
 import scipy.stats as stats
@@ -7,22 +7,20 @@ import matplotlib.pyplot as plt
 from quspin.operators import hamiltonian
 
 
-Lx = 4
-Ly = 1
+L = 10
 T = 1000.0
 error = 0.02*6
 N_anneal = 10
 Nc = 1000
 
-N = Lx*Ly
-Nb = Lx*(Ly-1)+Ly*(Lx-1)
+Nb = L
 
-J0 = -6*np.ones(Nb+N) # contains both bonds and local z fields
-J0[N:] = -error # fields average coupling is 0.0
+J0 = -6*np.ones(Nb) # contains both bonds and local z fields
+J0[L] = -error # fields average coupling is 0.0
 h0 = -12*np.ones(N)
 
 # setting up main object for q-annealing
-tfim = TFIM_2d(Lx,Ly)
+tfim = TFIM_1d(L)
 
 
 def J_ramp(t,T):
@@ -47,28 +45,10 @@ def get_noise_osc():
 	return J_func,h_func
 
 
-J_list = [[-1.0,i,j] for i,j in tfim.up_iter]
-J_list.extend([[-1.0,i,j] for i,j in tfim.left_iter])
-
-M_list = [[1.0,i] for i in range(N)]
-
-M = hamiltonian([["z",M_list]],[],N=N,pauli=True,dtype=np.float32).diagonal()/N
-H_ising = hamiltonian([["zz",J_list]],[],N=N,pauli=True,dtype=np.float32).diagonal()
-H_ising -= H_ising.min()
-H_ising /= N
 
 
 
-# J_func,h_func = get_noise_osc()
-# J_func,h_func = get_noise_fourier(1000,error)
-# times = np.linspace(0,T,1000)
-# noise = np.array([-np.hstack((J_func(t),h_func(t))) for t in times])
-# plt.plot(times,noise)
-# plt.show()
-# exit()
 
-
-psi_i = np.ones(2**N)/np.sqrt(2**N)
 
 for i in range(N_anneal):
 	J_func,h_func = get_noise_fourier(Nc,error)

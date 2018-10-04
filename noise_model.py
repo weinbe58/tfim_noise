@@ -1,4 +1,4 @@
-
+import numpy as np
 
 class noise(object):
 	def __init__(self,J0,ramp,ramp_args=()):
@@ -13,27 +13,45 @@ class noise(object):
 class fourier_noise(noise):
 	def __init__(self,J0,ramp,width,omega,ramp_args=()):
 		noise.__init__(self,J0,ramp,ramp_args)
-
-		try:
-			N = len(J0)
-		except TypeError:
-			N = 0
 		Nc = len(omega)
+		try:
+			shape = (Nc,len(J0))
+		except TypeError:
+			shape = (Nc,)
 
 
-		if N==0:
-			self._omega = omega
-			self._c = np.random.normal(0,width/np.sqrt(Nc),size=(Nc,))+ \
-					1j*np.random.normal(0,width/np.sqrt(Nc),size=(Nc,))
-		else:
-			self._omega = omega
-			self._c = np.random.normal(0,width/np.sqrt(Nc),size=(Nc,N))+ \
-					1j*np.random.normal(0,width/np.sqrt(Nc),size=(Nc,N))
+		self._omega = omega
+		self._c = np.random.normal(0,width/np.sqrt(Nc),size=shape)+ \
+				1j*np.random.normal(0,width/np.sqrt(Nc),size=shape)
 
 		self._Nc = Nc
 
 	def _noise(self,t):
 		return (np.exp(1j*t*self._omega).dot(self._c)).real
+
+
+
+
+class fourier_noise_real(noise):
+	def __init__(self,J0,ramp,width,omega,ramp_args=()):
+		noise.__init__(self,J0,ramp,ramp_args)
+		Nc = len(omega)
+		try:
+			shape = (Nc,len(J0))
+		except TypeError:
+			shape = (Nc,)
+
+
+
+		self._omega = omega
+		self._x = np.random.normal(0,width/np.sqrt(Nc),size=shape)
+		self._p = np.random.normal(0,width/np.sqrt(Nc),size=shape)
+
+		self._Nc = Nc
+
+	def _noise(self,t):
+		e = np.exp(1j*t*self._omega)
+		return e.real.dot(x)+e.imag.dot(p)
 
 
 class osc_noise(noise):
