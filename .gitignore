@@ -1,4 +1,9 @@
 *~
+Submit_jobs.sh
+qdel_jobs.sh
+runfiles/
+jobfiles/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

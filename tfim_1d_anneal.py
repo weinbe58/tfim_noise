@@ -11,7 +11,7 @@ T = float(sys.argv[2])
 error = float(sys.argv[3])
 Nc = int(sys.argv[4])
 N_anneal = int(sys.argv[5])
-
+path = sys.argv[6]
 
 J0 = -np.ones(L) # contains bonds 
 J0[-1] = 0.0
@@ -51,7 +51,6 @@ def get_noise_fourier(Nc,domega,T):
 	h_func = lambda t:h0*h_ramp(t,T)
 	return J_func,h_func
 
-path = ""
 
 
 filename = os.path.join(path,"anneal_noise_L_{}_T_{}_A_{}_Nc_{}.dat".format(L,T,error,Nc))
