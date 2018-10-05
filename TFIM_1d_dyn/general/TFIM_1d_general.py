@@ -27,7 +27,6 @@ class TFIM_general(object):
 		if len(J) != L:
 			raise ValeuError("J must be scalar or an array of length L")
 
-
 		data = np.zeros((4,L),dtype=J.dtype)
 
 		data[0,0] = J[-1]*(-1)**(Nf+1)
@@ -49,7 +48,7 @@ class TFIM_general(object):
 		# exit()
 
 		self._Hzz = sp.bmat([[self._A,self._B],[-self._B,-self._A]],format="csr")
-		self._Hx = np.hstack((h,-h))
+		self._Hx = np.hstack((-h,h))
 
 
 
@@ -78,6 +77,7 @@ class TFIM_general(object):
 			s = self.s(time,*self.s_args)
 			h = self.A(s)
 			J = self.B(s)
+
 		v_f = J*self._Hzz.dot(v)
 		v_f += np.einsum(",i,ij->ij",h,self._Hx,v)
 		return v_f

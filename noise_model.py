@@ -24,12 +24,13 @@ class fourier_noise(noise):
 		self._omega = omega
 		self._c =np.random.normal(0,width/np.sqrt(Nc),size=shape)
 		self._e = np.zeros(omega.shape,dtype=np.complex128)
+		self._e_real = self._e.view(np.float64)
 
 		self._Nc = Nc
 
 	def _noise(self,t):
 		np.exp(1j*t*self._omega,out=self._e)
-		return self._e.view(np.float64).dot(self._c)
+		return self._e_real.dot(self._c)
 
 
 class osc_noise(noise):
