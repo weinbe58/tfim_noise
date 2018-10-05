@@ -1,6 +1,7 @@
 import numpy as np
 import glob,sys,os 
 import matplotlib.pyplot as plt
+from itertools import product
 
 
 def bootstrap_mean(Os,n_bs=100):
@@ -26,64 +27,74 @@ def bootstrap_fluc(Os,n_bs=100):
 	return avg,err
 
 
-# filelist = glob.glob("/project/diamond/mbl_1d_data/run_L_*_w_*.dat")
-filelist = glob.glob("/projectnb/qspin/weinbe58/project_temp_data/mbl_1d_data/run_L_*_w_*.dat")
+def get_filedict(filename):
+	filename = os.path.split(filename)[-1] # remove path
+	filename = ".".join(filename.split(".")[:-1]) # rm extension
+	filelist = filename.split("_")
+
+	filedict = {}
+	for i,item in enumerate(filelist):
+		if item.replace(".","").isdigit():
+			filedict[filelist[i-1]] = eval(item)
+
+	return filedict
+
+
+
+
+
+filelist = glob.glob(sys.argv[1])
 filelist.sort()
 
-file_dict = {}
+data_dict = {}
+
+L_list = set([])
+Nc_list = set([])
+T_list = set([])
+
+print filelist
 
 if filelist:
 	for filename in filelist:
 		print filename 	
-		filelist = os.path.split(filename)[-1].replace(".dat","").split("_")
+		filedict = get_filedict(filename)
 
-		i = filelist.index("L")
-		N = int(filelist[i+1])
-		i = filelist.index("w")
-		w = float(filelist[i+1])
-		if os.path.isfile("ramp_L_{}.out".format(N)):
-			continue
+		L = filedict["L"]
+		T = filedict["T"]
+		Nc = filedict["Nc"]
 
-		if N not in file_dict:
-			file_dict[N] = {}
-
-		file_dict[N][w] = filename
+		L_list.add(L)
+		T_list.add(T)
+		Nc_list.add(Nc)
 
 
-	for N in file_dict.keys():
-		print "ramp_L_{}.out".format(N)	
-		if os.path.isfile("ramp_L_{}.out".format(N)):
-			continue
+		data = np.loadtxt(filename)
+		Q,M2 = data[:,0],data[:,1]
 
-		ws = np.asarray(file_dict[N].keys())
+		Q_avg,dQ_avg = bootstrap_mean(Q)
+		M2_avg,dM2_avg = bootstrap_mean(M2)
+		row = [Q_avg,dQ_avg,M2_avg,dM2_avg]
 
-		arg = np.argsort(ws)
-		ws = ws[arg].reshape((-1,1))
-
-		y = []
-		for w in ws.ravel():
-			print file_dict[N][w]
-			data = np.loadtxt(file_dict[N][w])
-			continue 
-			MLS = data[:,0]
-			shape = MLS.shape+(2,-1)
-			other_data = data[:,1:].reshape(shape)
-			F = np.nanmean(other_data[:,0,:],axis=1)
-			S = np.nanmean(other_data[:,1,:],axis=1)
-		
-			S,dS = bootstrap_mean(S)
-			F_e,dF_e = bootstrap_mean(F)
-			F2_e,dF2_e = bootstrap_mean(F**2)
-			MLS,dMLS = bootstrap_mean(MLS)
-
-			y.append([F_e,dF_e,F2_e,dF2_e,S,dS,MLS,dMLS])
+		data_dict[(L,Nc,T)] = np.array(row)
 
 
-		continue 
-		y = np.asarray(y)
-		data = np.hstack((ws,y))
+	L_list = np.fromiter(L_list,dtype=np.int)
+	T_list = np.fromiter(T_list,dtype=np.float)
+	Nc_list = np.fromiter(Nc_list,dtype=np.int)
 
-		np.savetxt("ramp_L_{}.out".format(N),data,fmt="%30.15e")
-		
+	L_list.sort()
+	T_list.sort()
+	Nc_list.sort()
 
+	shape = L_list.shape+Nc_list.shape+T_list.shape+(4,)
+	data = np.full(shape,np.nan,dtype=np.float)
+	for L,Nc,T in product(L_list,Nc_list,T_list):
+		if (L,Nc,T) in data_dict:
+			i = np.searchsorted(L_list,L)
+			j = np.searchsorted(Nc_list,Nc)
+			k = np.searchsorted(T_list,T)
+			data[i,j,k,:] = data_dict[(L,Nc,T)]
+
+
+	np.savez_compressed("runs.npz",data=data,L_list=L_list,Nc_list=Nc_list,T_list=T_list)
 
