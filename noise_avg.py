@@ -69,6 +69,8 @@ if filelist:
 
 
 		data = np.loadtxt(filename)
+		if data.size == 0: 
+			continue 
 		Q,M2 = data[:,0],data[:,1]
 
 		Q_avg,dQ_avg = bootstrap_mean(Q)
