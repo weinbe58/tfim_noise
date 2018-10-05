@@ -4,6 +4,9 @@ qdel_jobs.sh
 runfiles/
 jobfiles/
 
+*_jobfiles.in
+.nfs*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
