@@ -1,81 +1,83 @@
 from tfim_module import TFIM_2d
-from noise_model import fourier_noise,osc_noise
+from noise_model import fourier_noise
 import numpy as np
-import scipy.stats as stats
-import cProfile
-import matplotlib.pyplot as plt
+import scipy.optimize as op
+import os,sys
 from quspin.operators import hamiltonian
 
 
-Lx = 4
-Ly = 1
-T = 1000.0
-error = 0.02*6
-N_anneal = 10
-Nc = 1000
+Lx = int(sys.argv[1])
+T = float(sys.argv[2])
+error = float(sys.argv[3])
+Nc = int(sys.argv[4])
+N_anneal = int(sys.argv[5])
+path = sys.argv[6]
 
-N = Lx*Ly
-Nb = Lx*(Ly-1)+Ly*(Lx-1)
 
-J0 = -6*np.ones(Nb+N) # contains both bonds and local z fields
-J0[N:] = -error # fields average coupling is 0.0
-h0 = -12*np.ones(N)
+
+error = 0.02
+
+
+N = Lx
+Nb = (Lx-1)
+
+J0 = -2*np.ones(Nb+N) # contains both bonds and local z fields
+J0[N:] = 0.0 # field is set to 0, disorder is added in function
+h0 = -np.ones(N)
 
 # setting up main object for q-annealing
-tfim = TFIM_2d(Lx,Ly)
+tfim = TFIM_2d(Lx,1)
 
 
 def J_ramp(t,T):
 	return (t/T)**2
 
 def h_ramp(t,T):
-	return (1-t/T)**2
+	return np.exp(-t/(0.3*T))*(1-t/T)**2
 
-def get_noise_fourier(Nc,domega):
-	omega = stats.cauchy.rvs(scale=domega,size=Nc)
-	J_func = fourier_noise(J0,J_ramp,error,omega,ramp_args=(T,))
-	h_func = fourier_noise(h0,h_ramp,0.0,np.zeros(1),ramp_args=(T,))
+def get_samples(Nsamples,omega_min=2.5e-7,omega_max=1,alpha=-0.75):
+	def C(omega,omega_min,omega_max,alpha):
+		return (omega_min**(1+alpha)-omega**(1+alpha))/(omega_min**(1+alpha)-omega_max**(1+alpha))
+
+	p_list = np.random.uniform(0,1,size=Nsamples)
+	omega_list = [] #always include static part
+	for p in p_list:
+		f = lambda x:C(x,omega_min,omega_max,alpha)-p
+		omega_list.append(op.brentq(f,omega_min,omega_max))
+
+	return np.asarray(omega_list)
+
+def get_noise_fourier(Nc,domega,T):
+	omega = get_samples(Nc,omega_max=10)
+	J = J0+np.random.uniform(0,error,size=J0.shape)
+	J_func = fourier_noise(J,J_ramp,error,omega,ramp_args=(T,))
+	h_func = lambda t:h0*h_ramp(t,T)
 	return J_func,h_func
 
-def get_noise_osc():
-	s = 1.0
-	q1 = stats.norm.rvs(scale=0.1,size=J0.shape)+1j*stats.norm.rvs(scale=1.0,size=J0.shape)
-	q2 = stats.norm.rvs(scale=0.1,size=h0.shape)+1j*stats.norm.rvs(scale=1.0,size=h0.shape)
-	J_func = osc_noise(J0,J_ramp,error,q1,T,s=s,ramp_args=(T,))
-	h_func = osc_noise(h0,h_ramp,error,q2,T,s=s,ramp_args=(T,))
 
-	return J_func,h_func
+
+filename = os.path.join(path,"anneal_noise_noint_L_{}_T_{}_A_{}_Nc_{}.dat".format(Lx,T,error,Nc))
 
 
 J_list = [[-1.0,i,j] for i,j in tfim.up_iter]
 J_list.extend([[-1.0,i,j] for i,j in tfim.left_iter])
 
-M_list = [[1.0,i] for i in range(N)]
-
-M = hamiltonian([["z",M_list]],[],N=N,pauli=True,dtype=np.float32).diagonal()/N
-H_ising = hamiltonian([["zz",J_list]],[],N=N,pauli=True,dtype=np.float32).diagonal()
-H_ising -= H_ising.min()
-H_ising /= N
+M_list = [[1.0,i,j] for i in range(N) for j in range(N)]
 
 
-
-# J_func,h_func = get_noise_osc()
-# J_func,h_func = get_noise_fourier(1000,error)
-# times = np.linspace(0,T,1000)
-# noise = np.array([-np.hstack((J_func(t),h_func(t))) for t in times])
-# plt.plot(times,noise)
-# plt.show()
-# exit()
+H_ising = hamiltonian([["zz",J_list]],[],N=N,pauli=True,dtype=np.float64)
+M2 = hamiltonian([["zz",M_list]],[],basis=H_ising.basis,dtype=np.float64)
 
 
 psi_i = np.ones(2**N)/np.sqrt(2**N)
+with open(filename,"a") as IO:
+	for i in range(N_anneal):
+		J_func,h_func = get_noise_fourier(Nc,error,T)
+		psi_f = tfim.anneal(psi_i,0,T,J_func,h_func,atol=1.1e-15,rtol=1.1e-10,solver_name='dop853')
 
-for i in range(N_anneal):
-	J_func,h_func = get_noise_fourier(Nc,error)
+		m2 = M2.expt_value(psi_f).real/N**2
+		q = H_ising.expt_value(psi_f).real+(N-1)
 
-	psi_f = tfim.anneal(psi_i,0,T,J_func,h_func,atol=1.1e-7,rtol=1.1e-7,solver_name='dop853')
-
-	print psi_f.conj().dot(H_ising*psi_f).real,
-	print psi_f.conj().dot(M*M*psi_f).real
-
+		IO.write("{:30.15e} {:30.15e}\n".format(q,m2))
+		IO.flush()
 

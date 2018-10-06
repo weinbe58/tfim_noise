@@ -98,5 +98,5 @@ if filelist:
 			data[i,j,k,:] = data_dict[(L,Nc,T)]
 
 
-	np.savez_compressed("runs.npz",data=data,L_list=L_list,Nc_list=Nc_list,T_list=T_list)
+	np.savez_compressed(sys.argv[2],data=data,L_list=L_list,Nc_list=Nc_list,T_list=T_list)
 

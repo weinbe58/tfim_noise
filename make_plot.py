@@ -50,7 +50,7 @@ def plot(datadict,figname,ncol,xlabel,ylabel,keys=None,logx=True,logy=False,lege
 
 
 
-runs = np.load("runs.npz")
+runs = np.load(sys.argv[1])
 
 
 data = runs["data"]

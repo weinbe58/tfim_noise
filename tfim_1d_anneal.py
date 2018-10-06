@@ -13,9 +13,9 @@ Nc = int(sys.argv[4])
 N_anneal = int(sys.argv[5])
 path = sys.argv[6]
 
-J0 = -np.ones(L) # contains bonds 
+J0 = -2*np.ones(L) # contains bonds 
 J0[-1] = 0.0
-h0 = -2*np.ones(L)
+h0 = -np.ones(L)
 
 # setting up main object for q-annealing
 tfim = TFIM_1d(L)
@@ -24,12 +24,11 @@ B = lambda x:x**2
 s = lambda t:t/T
 tfim_H = TFIM_general(L,A,B,s,(),J=J0,h=h0)
 
-
 def J_ramp(t,T):
 	return (t/T)**2
 
 def h_ramp(t,T):
-	return (1-t/T)**2
+	return np.exp(-t/(0.3*T))*(1-t/T)**2
 
 
 def get_samples(Nsamples,omega_min=2.5e-7,omega_max=1,alpha=-0.75):
@@ -65,8 +64,8 @@ with open(filename,"a") as IO:
 		psi_f = tfim.anneal(psi_i,0,T,J_func,h_func,atol=1.1e-15,rtol=1.1e-10,solver_name='dop853')
 
 		AA,BB,AB,BA = get_C_fermion(L,psi_f)
-		M2 = get_C_spin(AA,BB,AB,BA).real.sum()/L**2
-		Q = tfim_H.expt_value(psi_f,J=1.0,h=0.0).real - E0
+		m2 = get_C_spin(AA,BB,AB,BA).real.sum()/L**2
+		q = tfim_H.expt_value(psi_f,J=1.0,h=0.0).real - E0
 
-		IO.write("{:30.15e} {:30.15e}\n".format(Q,M2))
+		IO.write("{:30.15e} {:30.15e}\n".format(q,m2))
 		IO.flush()
