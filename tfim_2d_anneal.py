@@ -14,10 +14,6 @@ N_anneal = int(sys.argv[5])
 path = sys.argv[6]
 
 
-
-error = 0.02
-
-
 N = Lx
 Nb = (Lx-1)
 
