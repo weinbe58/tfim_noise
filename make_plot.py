@@ -49,8 +49,8 @@ def plot(datadict,figname,ncol,xlabel,ylabel,keys=None,logx=True,logy=False,lege
 	plt.savefig(figname,dpi=1000)
 
 
-
-runs = np.load(sys.argv[1])
+datafile = sys.argv[1]
+runs = np.load(datafile)
 
 
 data = runs["data"]
@@ -69,5 +69,5 @@ for i,L in enumerate(L_list):
 	datadict[key] = d
 
 
-plot(datadict,"m2.pdf",3,"$vL^2$","$m^2(v,L)$",xscale=2,logx=True,logy=True)
-plot(datadict,"e.pdf",1,"$vL^2$","$Q(v,L)/L$",xscale=2,logx=True,logy=True)
+plot(datadict,"{}_m2.pdf".format(".".join(datafile.split(".")[:-1])),3,"$vL^2$","$m^2(v,L)$",xscale=2,logx=True,logy=False)
+plot(datadict,"{}_e.pdf".format(".".join(datafile.split(".")[:-1])),1,"$vL^2$","$Q(v,L)/L$",xscale=2,logx=True,logy=False)
