@@ -13,7 +13,7 @@ Nc = int(sys.argv[4])
 N_anneal = int(sys.argv[5])
 path = sys.argv[6]
 
-J0 = -2*np.ones(L) # contains bonds 
+J0 = -np.ones(L) # contains bonds 
 J0[::2] = J0[1::2]/2.0
 J0[-1] = 0.0
 h0 = -np.ones(L)
