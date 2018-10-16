@@ -2,7 +2,7 @@ import math
 import numpy as np
 from numba import jit,uint64
 from scipy.integrate import ode
-
+import os,sys
 
 
 @jit(nopython=True)
@@ -19,13 +19,13 @@ def z_term(hz,i,field):
 def defect(yin,yout,alpha,site):
     if alpha == 0:
         for s in range(yin.size):
-            yout[s] = yin[s^(1<<i)]
+            yout[s] = yin[s^(1<<site)]
     elif alpha == 1:
         for s in range(yin.size):
-            yout[s] = 1j*((((s>>i)&1)<<1)-1)*yin[s^(1<<i)]
+            yout[s] = 1j*((((s>>site)&1)<<1)-1)*yin[s^(1<<site)]
     else:
         for s in range(yin.size):
-            yout[s] = ((((s>>i)&1)<<1)-1)*yin[s]
+            yout[s] = ((((s>>site)&1)<<1)-1)*yin[s]
 
 
 @jit(nopython=True)
@@ -115,6 +115,9 @@ def poisson_ramp(N,T,H_ising,gamma,process):
 
 
 Lx = int(sys.argv[1])
+Ly = 1
+N = Lx*Ly
+Nb = Lx-1
 T = float(sys.argv[2])
 gamma = float(sys.argv[3])
 N_anneal = int(sys.argv[4])
@@ -142,7 +145,7 @@ for _,i,j in M_list:
 psi_f_np = poisson_ramp(N,T,H_ising,gamma,())
 
 
-filename = os.path.join(path,"anneal_err1_noint_L_{}_T_{}_gamma_{}.dat".format(Lx,T,gamma,Nc))
+filename = os.path.join(path,"anneal_err1_noint_L_{}_T_{}_gamma_{}.dat".format(Lx,T,gamma))
 
 with open(filename,"a") as IO:
     for i in range(N_anneal):
