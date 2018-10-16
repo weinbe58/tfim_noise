@@ -31,16 +31,16 @@ def defect(yin,yout,alpha,site):
 @jit(nopython=True)
 def H(t,psi_in,psi_out,H_ising,T,pg):
     # print np.linalg.norm(psi_in)
-    J = -1j*(t/T)**2
+    J = (t/T)**2
     h = (1-t/T)**2
     for s in range(psi_in.size):
         b = uint64(1) # use this number fo flip bit to get column index
-        ME = (pg*h + J*H_ising[s])*psi_in[s] 
+        ME = (-1j*pg + J*H_ising[s])*psi_in[s] 
         for j in range(N):
-            ME += 1j*h*psi_in[s^b] # x-field action
+            ME += -h*psi_in[s^b] # x-field action
             b <<= 1 # shift flipping fit to the right
 
-        psi_out[s] = ME
+        psi_out[s] = -1j*ME
 
     return psi_out
 
