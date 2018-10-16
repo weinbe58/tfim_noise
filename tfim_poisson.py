@@ -1,0 +1,167 @@
+import math
+import numpy as np
+from numba import jit,uint64
+from scipy.integrate import ode
+
+
+
+@jit(nopython=True)
+def ising_term(J,i,j,ising):
+    for k in range(ising.size):
+        ising[k] += J*(1 - ((((k>>i)^(k>>j))&1)<<1)) 
+
+@jit(nopython=True)
+def z_term(hz,i,field):
+    for k in range(field.size):
+        field[k] += hz*(((k>>i)&1)<<1)-1
+
+@jit(nopython=True)
+def defect(yin,yout,alpha,site):
+    if alpha == 0:
+        for s in range(yin.size):
+            yout[s] = yin[s^(1<<i)]
+    elif alpha == 1:
+        for s in range(yin.size):
+            yout[s] = 1j*((((s>>i)&1)<<1)-1)*yin[s^(1<<i)]
+    else:
+        for s in range(yin.size):
+            yout[s] = ((((s>>i)&1)<<1)-1)*yin[s]
+
+
+@jit(nopython=True)
+def H(t,psi_in,psi_out,H_ising,T,pg):
+    # print np.linalg.norm(psi_in)
+    J = -1j*(t/T)**2
+    h = (1-t/T)**2
+    for s in range(psi_in.size):
+        b = uint64(1) # use this number fo flip bit to get column index
+        ME = (pg*h + J*H_ising[s])*psi_in[s] 
+        for j in range(N):
+            ME += 1j*h*psi_in[s^b] # x-field action
+            b <<= 1 # shift flipping fit to the right
+
+        psi_out[s] = ME
+
+    return psi_out
+
+def H_wrap(t,psi_in,psi_out,H_ising,T,pg):
+    return H(t,psi_in.view(np.complex128),psi_out,H_ising,T,pg).view(np.float64)
+
+
+def generate_process(gamma,N,tmax):
+
+    def nextTime(rateParameter):
+        return -math.log(1.0 - np.random.ranf()) / rateParameter
+
+    rateParameter = 3*N*gamma
+    rate = lambda t:rateParameter
+    process = []
+    t = 0
+    while True:
+        t += nextTime(rateParameter)
+
+        if t > tmax:
+            break
+
+        if np.random.ranf() <= rate(t)/rateParameter:
+            p = np.array([(1-t/T)**4,2*((1-t/T)*(t/T))**2,(t/T)**4])
+            p /= p.sum()
+            alpha = np.random.choice(np.arange(3),p=p.ravel())
+            site = np.random.randint(N)
+            process.append((t,alpha,site))
+
+    return process
+
+
+def poisson_ramp(N,T,H_ising,gamma,process):
+    pg = 3*N*gamma
+
+    psi0 = np.ones(2**N,dtype=np.complex128)/np.sqrt(2**N)
+    psi_out = np.zeros_like(psi0)
+
+    solver = ode(H_wrap)
+    solver.set_integrator("dop853",nsteps=np.iinfo(np.int32).max,atol=1.1e-7,rtol=1.1e-3)
+    solver.set_f_params(psi_out,H_ising,T,pg)
+
+    solver.set_initial_value(psi0.view(np.float64))
+
+
+    for t,alpha,site in process:
+        nt = 10*int(t-solver.t)
+        tt = np.linspace(solver.t,t,nt+2)
+
+        for t in tt[1:]:
+            solver.integrate(t)
+
+        if solver.successful():
+            psi_out[:] = solver.y.view(np.complex128)
+            psi_out /= np.linalg.norm(psi_out)
+            defect(psi_out,solver.y.view(np.complex128),alpha,site)
+        else:
+            raise RuntimeError("error code {}".format(solver.get_return_code()))
+
+    nt = 10*int(T-solver.t)
+    tt = np.linspace(solver.t,T,nt+2)
+    for t in tt[1:]:
+        solver.integrate(t)
+
+    if solver.successful():
+        psi_out[:] = solver.y.view(np.complex128)
+        psi_out /= np.linalg.norm(psi_out)
+        return psi_out
+    else:
+        raise RuntimeError("error code {}".format(solver.get_return_code()))
+
+
+
+Lx = int(sys.argv[1])
+T = float(sys.argv[2])
+gamma = float(sys.argv[3])
+N_anneal = int(sys.argv[4])
+path = sys.argv[5]
+
+
+up_iter = [(i+Lx*j,i+Lx*(j+1)) for i in range(Lx) for j in range(Ly-1)]
+left_iter = [(i+Lx*j,(i+1)+Lx*j) for i in range(Lx-1) for j in range(Ly)]
+
+
+J_list = [[-1,i,j] for i,j in up_iter]
+J_list.extend([[-1,i,j] for i,j in left_iter])
+
+M_list = [[1.0,i,j] for i in range(N) for j in range(N)]
+
+
+H_ising = np.zeros(2**N,dtype=np.int8)
+for J,i,j in J_list:
+    ising_term(J,i,j,H_ising)
+
+M2 = np.zeros(2**N,dtype=np.float64)
+for _,i,j in M_list:
+    ising_term(1.0/N**2,i,j,M2)
+
+psi_f_np = poisson_ramp(N,T,H_ising,gamma,())
+
+
+filename = os.path.join(path,"anneal_err1_noint_L_{}_T_{}_gamma_{}.dat".format(Lx,T,gamma,Nc))
+
+with open(filename,"a") as IO:
+    for i in range(N_anneal):
+        print i+1
+        process = generate_process(gamma,N,T)
+        if len(process) > 0:
+            while True:
+                try:
+                    psi_f = poisson_ramp(N,T,H_ising,gamma,process)
+                    break
+                except RuntimeError:
+                    continue
+        else:
+            psi_f = psi_f_np
+
+        m2 = np.vdot(psi_f,M2*psi_f).real
+        q = np.vdot(psi_f,H_ising*psi_f).real + Nb
+        print m2,q
+
+        IO.write("{:30.15e} {:30.15e}\n".format(q,m2))
+        IO.flush()
+

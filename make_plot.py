@@ -15,7 +15,7 @@ def fill_marker(i):
 	return Line2D.filled_markers[j]
 
 
-def plot(datadict,figname,ncol,xlabel,ylabel,keys=None,logx=True,logy=False,legend_opts={},xscale=0.0,yscale=0.0,yshift=None,xshift=None,xlim=None,ylim=None,legend=True):
+def plot(datadict,figname,ncol,xlabel,ylabel,keys=None,logx=True,logy=False,legend_opts={},xscale=0.0,yscale=0.0,yshift=None,xshift=None,xlim=None,ylim=None,legend=True,func=None):
 	plt.clf()
 	if xshift is None:
 		xshift = lambda v,L:0.0
@@ -37,6 +37,16 @@ def plot(datadict,figname,ncol,xlabel,ylabel,keys=None,logx=True,logy=False,lege
 		plt.xscale("log", nonposx='clip')
 	if logy:
 		plt.yscale("log", nonposy='clip')
+
+	xmin,xmax = plt.gca().get_xlim()
+	ymin,ymax = plt.gca().get_ylim()
+
+	if func is not None:
+		xx = np.linspace(xmin,xmax,10001)
+		plt.plot(xx,func(xx),linestyle=":",color=color_list(len(keys)),marker="")
+
+	plt.xlim(xmin,xmax)
+	plt.ylim(ymin,ymax)
 
 	if legend:
 		plt.legend(**legend_opts)
@@ -69,5 +79,7 @@ for i,L in enumerate(L_list):
 	datadict[key] = d
 
 
-plot(datadict,"{}_m2.pdf".format(".".join(datafile.split(".")[:-1])),3,"$vL^2$","$m^2(v,L)$",xscale=2,logx=True,logy=False)
-plot(datadict,"{}_e.pdf".format(".".join(datafile.split(".")[:-1])),1,"$vL^2$","$Q(v,L)/L$",xscale=2,logx=True,logy=False)
+func_e = lambda x:np.sqrt(x)
+func_m2 = lambda x:1/np.sqrt(x)
+plot(datadict,"{}_m2.pdf".format(".".join(datafile.split(".")[:-1])),3,"$vL^2$","$m^2(v,L)$",xscale=2,logx=True,logy=True,func=func_m2)
+plot(datadict,"{}_e.pdf".format(".".join(datafile.split(".")[:-1])),1,"$vL^2$","$Q(v,L)/L$",xscale=2,logx=True,logy=True,func=func_e)

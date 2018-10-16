@@ -1,18 +1,22 @@
 import numpy as np
 
 class noise(object):
-	def __init__(self,J0,ramp,ramp_args=()):
+	def __init__(self,J0,ramp,ramp_args=(),scale_noise=False):
 		self._J0 = J0
 		self._ramp = ramp
 		self._ramp_args = ramp_args
+		self._scale_noise=scale_noise
 
 	def __call__(self,t):
-		return (self._J0*self._ramp(t,*self._ramp_args)+self._noise(t))
+		if self._scale_noise:
+			return self._ramp(t,*self._ramp_args)*(self._J0+self._noise(t))
+		else:
+			return (self._J0*self._ramp(t,*self._ramp_args)+self._noise(t))
 
 
 class fourier_noise(noise):
-	def __init__(self,J0,ramp,width,omega,ramp_args=()):
-		noise.__init__(self,J0,ramp,ramp_args)
+	def __init__(self,J0,ramp,width,omega,ramp_args=(),scale_noise=False):
+		noise.__init__(self,J0,ramp,ramp_args,scale_noise=scale_noise)
 		Nc = len(omega)
 		try:
 			shape = (2*Nc,len(J0))
@@ -34,8 +38,8 @@ class fourier_noise(noise):
 
 
 class osc_noise(noise):
-	def __init__(self,J0,ramp,width,q0,Tmax,omega=0.6666666666,A=0.6666666666,gamma=0.1,k=1.0,s=1.0,ramp_args=()):
-		noise.__init__(self,J0,ramp,ramp_args)
+	def __init__(self,J0,ramp,width,q0,Tmax,omega=0.6666666666,A=0.6666666666,gamma=0.1,k=1.0,s=1.0,ramp_args=(),scale_noise=False):
+		noise.__init__(self,J0,ramp,ramp_args,scale_noise=False)
 
 
 		self._width=width
