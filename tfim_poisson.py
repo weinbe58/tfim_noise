@@ -64,7 +64,8 @@ def generate_process(gamma,N,tmax):
             break
 
         if np.random.ranf() <= rate(t)/rateParameter:
-            p = np.array([(1-t/T)**4,2*((1-t/T)*(t/T))**2,(t/T)**4])
+            # p = np.array([(1-t/T)**4,2*((1-t/T)*(t/T))**2,(t/T)**4])
+            p = np.array([1,1,1],dtype=np.float)
             p /= p.sum()
             alpha = np.random.choice(np.arange(3),p=p.ravel())
             site = np.random.randint(N)
@@ -149,8 +150,8 @@ filename = os.path.join(path,"anneal_err1_noint_L_{}_T_{}_gamma_{}.dat".format(L
 
 with open(filename,"a") as IO:
     for i in range(N_anneal):
-        print i+1
         process = generate_process(gamma,N,T)
+        print i+1,len(process)
         if len(process) > 0:
             while True:
                 try:
@@ -163,7 +164,6 @@ with open(filename,"a") as IO:
 
         m2 = np.vdot(psi_f,M2*psi_f).real
         q = np.vdot(psi_f,H_ising*psi_f).real + Nb
-        print m2,q
 
         IO.write("{:30.15e} {:30.15e}\n".format(q,m2))
         IO.flush()
