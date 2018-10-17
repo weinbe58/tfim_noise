@@ -47,10 +47,7 @@ filelist = glob.glob(sys.argv[1])
 filelist.sort()
 
 data_dict = {}
-
-L_list = set([])
-Nc_list = set([])
-T_list = set([])
+list_dict = {}
 
 print filelist
 
@@ -59,13 +56,12 @@ if filelist:
 		print filename 	
 		filedict = get_filedict(filename)
 
-		L = filedict["L"]
-		T = filedict["T"]
-		Nc = filedict["Nc"]
-
-		L_list.add(L)
-		T_list.add(T)
-		Nc_list.add(Nc)
+		for key,value in filedict.items():
+			key = key + "_list"
+			if key in list_dict:
+				list_dict[key].add(value)
+			else:
+				list_dict[key] = set([value])
 
 
 		data = np.loadtxt(filename)
@@ -77,19 +73,26 @@ if filelist:
 		M2_avg,dM2_avg = bootstrap_mean(M2)
 		row = [Q_avg,dQ_avg,M2_avg,dM2_avg]
 
-		data_dict[(L,Nc,T)] = np.array(row)
+		key = tuple(filedict.items())
+		data_dict[key] = np.array(row)
 
 
-	L_list = np.fromiter(L_list,dtype=np.int)
-	T_list = np.fromiter(T_list,dtype=np.float)
-	Nc_list = np.fromiter(Nc_list,dtype=np.int)
+	keys = list_dict.keys()
+	shape = ()
+	for key in keys:
+		np_list = np.fromiter(list_dict[key],dtype=np.float)
+		np_list.sort()
+		list_dict[key] = np_list
+		shape = shape + np_list.shape
 
-	L_list.sort()
-	T_list.sort()
-	Nc_list.sort()
 
-	shape = L_list.shape+Nc_list.shape+T_list.shape+(4,)
+	shape = shape + (4,)
 	data = np.full(shape,np.nan,dtype=np.float)
+
+
+	exit()
+
+
 	for L,Nc,T in product(L_list,Nc_list,T_list):
 		if (L,Nc,T) in data_dict:
 			i = np.searchsorted(L_list,L)
@@ -98,5 +101,5 @@ if filelist:
 			data[i,j,k,:] = data_dict[(L,Nc,T)]
 
 
-	np.savez_compressed(sys.argv[2],data=data,L_list=L_list,Nc_list=Nc_list,T_list=T_list)
+	np.savez_compressed(sys.argv[2],data=data,**list_dict)
 
