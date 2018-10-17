@@ -76,7 +76,7 @@ if filelist:
 		data_dict[key] = np.array(row)
 
 	keys = list_dict.keys()
-	keys.sort(key = lambda x:(-len(list_dict[x]),x))
+	keys.sort()
 	print keys
 	shape = ()
 	for key in keys:
