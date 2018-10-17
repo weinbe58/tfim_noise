@@ -57,7 +57,6 @@ if filelist:
 		filedict = get_filedict(filename)
 
 		for key,value in filedict.items():
-			key = key + "_list"
 			if key in list_dict:
 				list_dict[key].add(value)
 			else:
@@ -76,8 +75,9 @@ if filelist:
 		key = tuple(filedict.items())
 		data_dict[key] = np.array(row)
 
-
 	keys = list_dict.keys()
+	keys.sort(key = lambda x:(-len(list_dict[x]),x))
+	print keys
 	shape = ()
 	for key in keys:
 		np_list = np.fromiter(list_dict[key],dtype=np.float)
@@ -89,17 +89,14 @@ if filelist:
 	shape = shape + (4,)
 	data = np.full(shape,np.nan,dtype=np.float)
 
-
-	exit()
-
-
-	for L,Nc,T in product(L_list,Nc_list,T_list):
-		if (L,Nc,T) in data_dict:
-			i = np.searchsorted(L_list,L)
-			j = np.searchsorted(Nc_list,Nc)
-			k = np.searchsorted(T_list,T)
-			data[i,j,k,:] = data_dict[(L,Nc,T)]
-
+	for key,d in data_dict.items():
+		key_dict = dict(key)
+		index = []
+		for file_key in keys:
+			i = np.searchsorted(list_dict[file_key],key_dict[file_key])
+			index.append((i,))
+		index.append(Ellipsis)
+		data[tuple(index)] = d
 
 	np.savez_compressed(sys.argv[2],data=data,**list_dict)
 
