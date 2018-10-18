@@ -53,7 +53,7 @@ def generate_process(gamma,N,tmax):
     def nextTime(rateParameter):
         return -math.log(1.0 - np.random.ranf()) / rateParameter
 
-    rateParameter = 3*N*gamma
+    rateParameter = gamma.sum()
     rate = lambda t:rateParameter
     process = []
     t = 0
@@ -64,18 +64,17 @@ def generate_process(gamma,N,tmax):
             break
 
         if np.random.ranf() <= rate(t)/rateParameter:
-            # p = np.array([(1-t/T)**4,2*((1-t/T)*(t/T))**2,(t/T)**4])
-            p = np.array([1,1,1],dtype=np.float)
-            p /= p.sum()
-            alpha = np.random.choice(np.arange(3),p=p.ravel())
-            site = np.random.randint(N)
+            p = gamma/gamma.sum()
+            i = np.random.choice(np.arange(3*N),p=p.ravel())
+            site = i//3
+            alpha = i%3
             process.append((t,alpha,site))
 
     return process
 
 
 def poisson_ramp(N,T,H_ising,gamma,process):
-    pg = 3*N*gamma
+    pg = gamma.sum()
 
     psi0 = np.ones(2**N,dtype=np.complex128)/np.sqrt(2**N)
     psi_out = np.zeros_like(psi0)
@@ -123,6 +122,8 @@ T = float(sys.argv[2])
 gamma = float(sys.argv[3])
 N_anneal = int(sys.argv[4])
 path = sys.argv[5]
+
+gamma = np.full((L,3),gamma,dtype=np.float64)
 
 
 up_iter = [(i+Lx*j,i+Lx*(j+1)) for i in range(Lx) for j in range(Ly-1)]
