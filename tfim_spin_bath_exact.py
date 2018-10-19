@@ -111,8 +111,8 @@ L = int(sys.argv[1])
 T = float(sys.argv[2])
 gamma = float(sys.argv[3])
 omega = float(sys.argv[4])
-path = sys.argv[6]
 model = int(sys.argv[5])
+path = sys.argv[6]
 
 if model == 1:
 	anneal_bath(L,T,gamma,omega,path)
