@@ -76,7 +76,7 @@ def anneal_bath_2(L,T,gamma=0.01,path="."):
 	print "L={}, H-space size: {}".format(L,basis.Ns)
 	# exit()
 
-	B_list=[[L,0]] # photon energy
+	B_list = [[-1,0]] # photon energy
 	SB_list = [[2*gamma/L,i,0] for i in range(L)]
 	h_list = [[-1,i] for i in range(L)]
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
