@@ -56,8 +56,6 @@ def anneal_bath(L,T,gamma=0.2,omega=1.0,path="."):
 	print "dome."
 
 
-
-
 def anneal_bath_2(L,T,gamma=0.01,path="."):
 	filename = os.path.join(path,"spin_bath_exact_model2_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
 	if os.path.isfile(filename):
@@ -77,7 +75,7 @@ def anneal_bath_2(L,T,gamma=0.01,path="."):
 	# exit()
 
 	B_list = [[-1,0]] # photon energy
-	SB_list = [[2*gamma/L,i,0] for i in range(L)]
+	SB_list = [[-2*gamma/L,i,0] for i in range(L)]
 	h_list = [[-1,i] for i in range(L)]
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
 
@@ -107,6 +105,7 @@ def anneal_bath_2(L,T,gamma=0.01,path="."):
 	print "dome."
 
 
+
 L = int(sys.argv[1])
 T = float(sys.argv[2])
 gamma = float(sys.argv[3])
@@ -118,4 +117,3 @@ if model == 1:
 	anneal_bath(L,T,gamma,omega,path)
 elif model == 2:
 	anneal_bath_2(L,T,gamma,path)
-

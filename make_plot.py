@@ -84,20 +84,22 @@ for i,L in enumerate(L_list):
 	key = (L,"$L={}$".format(int(L)))
 
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,2,0,:]))
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,1,:]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
 
 	datadict[key] = d
 
-error = False
+
 
 func_e = lambda x:np.sqrt(x)
-func_m2 = lambda x:1/np.sqrt(x)
-plot(datadict,"{}_m2_2.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1])),2,"$vL^2$","$m^2(v,L)$"
-	,error=error,xscale=2,logx=True,logy=False)
-plot(datadict,"{}_e_2.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1])),1,"$vL^2$","$Q(v,L)/L$"
-	,error=error,xscale=2,logx=True,logy=False)
+func_m2 = lambda x:1/x**0.5
 
-plot(datadict,"{}_m2_3.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1])),2,"$vL^3$","$m^2(v,L)$"
-	,error=error,xscale=3,logx=True,logy=False)
-plot(datadict,"{}_e_3.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1])),1,"$vL^3$","$Q(v,L)/L$"
-	,error=error,xscale=3,logx=True,logy=False)
+exp = [1]
+for e in exp:
+	error = False
+	logy = True
+	logx = True
+	plot(datadict,"{}_m2_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$"
+		,error=error,xscale=e,logx=logx,logy=logy,func=func_m2)
+	logy = False
+	plot(datadict,"{}_e_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$"
+		,error=error,xscale=e,logx=logx,logy=logy)
