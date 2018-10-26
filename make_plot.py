@@ -83,23 +83,24 @@ for i,L in enumerate(L_list):
 
 	key = (L,"$L={}$".format(int(L)))
 
-	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,2,0,:]))
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,2,0,:]))
+	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
 
 	datadict[key] = d
 
 
 
 func_e = lambda x:np.sqrt(x)
-func_m2 = lambda x:1/x**0.5
+func_m2 = lambda x:1/x
 
-exp = [1]
+exp = [2.5,2.6,2.7,2.8,2.9]
 for e in exp:
 	error = False
-	logy = True
+	logy = False
 	logx = True
 	plot(datadict,"{}_m2_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$"
-		,error=error,xscale=e,logx=logx,logy=logy,func=func_m2)
-	logy = False
+		,error=error,xscale=e,logx=logx,logy=logy)
+
+	logy = True
 	plot(datadict,"{}_e_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$"
 		,error=error,xscale=e,logx=logx,logy=logy)

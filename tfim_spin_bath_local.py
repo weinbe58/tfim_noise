@@ -1,25 +1,33 @@
-from quspin.basis import spin_basis_1d,tensor_basis
+from quspin.basis import spin_basis_general
 from quspin.operators import hamiltonian
 from quspin.tools.evolution import evolve
 import numpy as np
-import cProfile,os,sys
+import cProfile,os,sys,time
 import matplotlib.pyplot as plt
 
 
 def anneal_bath(L,T,gamma=0.01,path="."):
-	filename = os.path.join(path,"spin_bath_exact_model3_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
+	ti = time.time()
+	filename = os.path.join(path,"spin_bath_exact_model4_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
 	if os.path.isfile(filename):
 		print "file_exists...exiting run."
 		exit()
+	N = 2*L
+	Z = -(np.arange(N)+1)
+	Tx = (np.arange(L)+1)%L
+	Tx = np.hstack((Tx,Tx+L))
+
+	P = np.arange(L)[::-1]
+	P = np.hstack((P,P+L))
 
 
 	print "creating basis"
-	basis = spin_basis_1d(2*L,pauli=True,a=2,pblock=1,kblock=0,zblock=1)
+	basis = spin_basis_general(N,pauli=True,pblk=(P,0),kblk=(Tx,0),zblk=(Z,0))
 	print "L={}, H-space size: {}".format(L,basis.Ns)
-	exit()
-	J_list = [[-1,i,(i+2)%(2*L)] for i in range(0,2*L,2)]
-	J_list += [[-1,i,(i+2)%(2*L)] for i in range(1,2*L,2)]
-	J_list += [[-gamma,i,(i+1)] for i in range(0,2*L,2)]
+
+	J_list = [[-1,i,(i+1)%L] for i in range(L)]
+	J_list += [[-gamma,L+i,L+(i+1)%L] for i in range(L)]
+	J_list += [[-gamma,i,i+L] for i in range(L)]
 
 	h_list = [[-1,i] for i in range(2*L)]
 
@@ -28,13 +36,15 @@ def anneal_bath(L,T,gamma=0.01,path="."):
 	A = lambda t:(t/T)**2
 	B = lambda t:(1-t/T)**2
 	dynamic = [["zz",J_list,A,()],["x",h_list,B,()]]
-
-	H = hamiltonian([],dynamic,basis=basis,dtype=np.float64)
+	kwargs=dict(basis=basis,dtype=np.float64,
+		check_symm=False,check_pcon=False,check_herm=False)
+	H = hamiltonian([],dynamic,**kwargs)
 
 
 	print "creating hamiltonian"
-	kwargs=dict(basis=basis,dtype=np.float64,
-		check_symm=False,check_pcon=False,check_herm=False)
+	kwargs=dict(basis=basis,dtype=np.float64
+		# ,check_symm=False,check_pcon=False,check_herm=False
+		)
 	H = hamiltonian([],dynamic,**kwargs)
 
 	print "solving initial state"
@@ -47,7 +57,7 @@ def anneal_bath(L,T,gamma=0.01,path="."):
 
 	print "saving"
 	np.savez_compressed(filename,psi=psi_f)
-	print "dome."
+	print "dome.... {} sec".format(time.time()-ti)
 
 
 L = int(sys.argv[1])
