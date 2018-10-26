@@ -6,7 +6,8 @@ jobfiles/
 
 *_jobfiles.in
 .nfs*
-*.pdf 
+*.pdf
+*.png  
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

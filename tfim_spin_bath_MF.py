@@ -12,11 +12,12 @@ def anneal_bath(L,T,gamma=0.2,omega=1.0,path="."):
 	if os.path.isfile(filename):
 		print "file_exists...exiting run."
 		exit()
+	Nb = 2*L
 
-	if L%2 == 1:
-		S = "{}/2".format(L)
+	if Nb%2 == 1:
+		S = "{}/2".format(Nb)
 	else:
-		S = "{}".format(L//2)
+		S = "{}".format(Nb//2)
 
 	print "creating basis"
 	spin_basis = spin_basis_1d(L,pauli=True,kblock=0,pblock=1)
@@ -25,8 +26,8 @@ def anneal_bath(L,T,gamma=0.2,omega=1.0,path="."):
 	print "L={}, H-space size: {}".format(L,basis.Ns)
 	# exit()
 
-	bath_energy=[[omega/L,0]] # photon energy
-	SB_list = [[gamma/np.sqrt(L),i,0] for i in range(L)]
+	bath_energy=[[omega/(2*Nb),0]]
+	SB_list = [[gamma/np.sqrt(Nb),i,0] for i in range(L)]
 	h_list = [[-1,i] for i in range(L)]
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
 
@@ -56,107 +57,6 @@ def anneal_bath(L,T,gamma=0.2,omega=1.0,path="."):
 	print "dome."
 
 
-def anneal_bath_2(L,T,gamma=0.01,path="."):
-	filename = os.path.join(path,"spin_bath_exact_model2_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
-	if os.path.isfile(filename):
-		print "file_exists...exiting run."
-		exit()
-
-	if L%2 == 1:
-		S = "{}/2".format(L)
-	else:
-		S = "{}".format(L//2)
-
-	print "creating basis"
-	spin_basis = spin_basis_1d(L,pauli=True,kblock=0,pblock=1)
-	bath_basis = spin_basis_1d(1,S=S)
-	basis = tensor_basis(spin_basis,bath_basis)
-	print "L={}, H-space size: {}".format(L,basis.Ns)
-	# exit()
-
-	B_list = [[-1,0]] # photon energy
-	SB_list = [[-2*gamma/L,i,0] for i in range(L)]
-	h_list = [[-1,i] for i in range(L)]
-	J_list = [[-1,i,(i+1)%L] for i in range(L)]
-
-
-	A = lambda t:(t/T)**2
-	B = lambda t:(1-t/T)**2
-	dynamic = [["+|",h_list,B,()],["-|",h_list,B,()],
-				["|+",B_list,B,()],["|-",B_list,B,()],
-				["zz|",J_list,A,()],
-				["z|z",SB_list,A,()]]
-
-	print "creating hamiltonian"
-	kwargs=dict(basis=basis,dtype=np.float64,
-		check_symm=False,check_pcon=False,check_herm=False)
-	H = hamiltonian([],dynamic,**kwargs)
-
-	print "solving initial state"
-	E0,psi_0 = H.eigsh(k=1,which="SA",time=0)
-	psi_0 = psi_0.ravel()
-
-	print "evolving"
-	out = np.zeros(psi_0.shape,dtype=np.complex128)
-	psi_f = evolve(psi_0,0,T,H._hamiltonian__omp_SO,f_params = (out,),solver_name="dop853")
-
-	print "saving"
-	np.savez_compressed(filename,psi=psi_f)
-	print "dome."
-
-
-
-def anneal_bath_3(L,T,gamma=0.01,path="."):
-	filename = os.path.join(path,"spin_bath_exact_model3_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
-	if os.path.isfile(filename):
-		print "file_exists...exiting run."
-		exit()
-
-	if L%2 == 1:
-		S = "{}/2".format(L)
-	else:
-		S = "{}".format(L//2)
-
-	print "creating basis"
-	spin_basis = spin_basis_1d(L,pauli=True,kblock=0,pblock=1)
-	bath_basis = spin_basis_1d(1,S=S)
-	basis = tensor_basis(spin_basis,bath_basis)
-	print "L={}, H-space size: {}".format(L,basis.Ns)
-
-	B_list = [[-1,0]] # photon energy
-	SB_xy_list = [[-gamma/np.sqrt(L),i,0] for i in range(L)]
-	h_list = [[-1,i] for i in range(L)]
-	J_list = [[-1,i,(i+1)%L] for i in range(L)]
-
-	A = lambda t:(t/T)**2
-	B = lambda t:(1-t/T)**2
-	dynamic = [
-				["x|",h_list,B,()],
-				["-|+",SB_xy_list,B,()],["+|-",SB_xy_list,B,()],
-				["|+",B_list,B,()],["|-",B_list,B,()],
-				["zz|",J_list,A,()],
-			]
-
-	print "creating hamiltonian"
-	kwargs=dict(basis=basis,dtype=np.float64,
-		check_symm=False,check_pcon=False,check_herm=False)
-	H = hamiltonian([],dynamic,**kwargs)
-
-	print "solving initial state"
-	E0,psi_0 = H.eigsh(k=1,which="SA",time=0)
-	psi_0 = psi_0.ravel()
-
-	print "evolving"
-	out = np.zeros(psi_0.shape,dtype=np.complex128)
-
-	kwargs = dict(f_params = (out,),solver_name="dop853")
-	psi_f = evolve(psi_0,0,T,H._hamiltonian__omp_SO,**kwargs)
-
-	print "saving"
-	np.savez_compressed(filename,psi=psi_f)
-	print "dome."
-
-
 
 L = int(sys.argv[1])
 T = float(sys.argv[2])
@@ -167,9 +67,3 @@ path = sys.argv[6]
 
 if model == 1:
 	anneal_bath(L,T,gamma,omega,path)
-elif model == 2:
-	anneal_bath_2(L,T,gamma,path)
-elif model == 3:
-	anneal_bath_3(L,T,gamma,path)
-else:
-	raise ValueError("model not recognized")

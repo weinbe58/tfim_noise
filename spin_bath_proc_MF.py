@@ -2,7 +2,7 @@ import numpy as np
 import glob,sys,os 
 import matplotlib.pyplot as plt
 from itertools import product
-from quspin.basis import spin_basis_general
+from quspin.basis import spin_basis_1d,tensor_basis
 from quspin.operators import hamiltonian
 from quspin.tools.evolution import evolve
 import numpy as np
@@ -25,29 +25,28 @@ def get_filedict(filename):
 
 
 def get_operators(L):
-	N = 2*L
-	Z = -(np.arange(N)+1)
-	Tx = (np.arange(L)+1)%L
-	Tx = np.hstack((Tx,Tx+L))
+	Nb = 2*L
+	if Nb%2 == 1:
+		S = "{}/2".format(Nb)
+	else:
+		S = "{}".format(Nb//2)
 
-	P = np.arange(L)[::-1]
-	P = np.hstack((P,P+L))
-
-	basis = spin_basis_general(N,pauli=True,pblk=(P,0),kblk=(Tx,0),zblk=(Z,0))
-
+	spin_basis = spin_basis_1d(L,pauli=True,kblock=0,pblock=1)
+	bath_basis = spin_basis_1d(1,S=S)
+	basis = tensor_basis(spin_basis,bath_basis)
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
 	M_list = [[1.0/L**2,i,j] for i in range(L) for j in range(L)]
 
 	kwargs=dict(basis=basis,dtype=np.float64,
 		check_symm=False,check_pcon=False,check_herm=False)
-	print basis.N//L
-	H_S = hamiltonian([["zz",J_list]],[],**kwargs)
-	M2 = hamiltonian([["zz",M_list]],[],**kwargs)
+	print basis.basis_left.L
+	H_S = hamiltonian([["zz|",J_list]],[],**kwargs)
+	M2 = hamiltonian([["zz|",M_list]],[],**kwargs)
 
 	return H_S,M2
 
 def process_file(filename,H_S,M2):
-	L = H_S.basis.N//2
+	L = H_S.basis.basis_left.L
 	file_data = np.load(filename)
 	psi = file_data["psi"]
 	return H_S.expt_value(psi).real+L,M2.expt_value(psi).real

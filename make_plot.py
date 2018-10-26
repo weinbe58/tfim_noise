@@ -78,12 +78,12 @@ datadict = {}
 
 print data.shape
 for i,L in enumerate(L_list):
-	if L < 10:
-		continue
+	# if L < 10:
+	# 	continue
 
 	key = (L,"$L={}$".format(int(L)))
 
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,2,0,:]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,0,:]))
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
 
 	datadict[key] = d
@@ -93,14 +93,14 @@ for i,L in enumerate(L_list):
 func_e = lambda x:np.sqrt(x)
 func_m2 = lambda x:1/x
 
-exp = [2.5,2.6,2.7,2.8,2.9]
+exp = [1.8,2.0,2.2]
 for e in exp:
 	error = False
 	logy = False
 	logx = True
-	plot(datadict,"{}_m2_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$"
+	plot(datadict,"{}_m2_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$"
 		,error=error,xscale=e,logx=logx,logy=logy)
 
-	logy = True
-	plot(datadict,"{}_e_{}.pdf".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$"
-		,error=error,xscale=e,logx=logx,logy=logy)
+	# logy = True
+	# plot(datadict,"{}_e_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$"
+	# 	,error=error,xscale=e,logx=logx,logy=logy)
