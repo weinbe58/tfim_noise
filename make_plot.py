@@ -66,14 +66,16 @@ def plot(datadict,figname,ncol,xlabel,ylabel,error=True,keys=None,logx=True,logy
 
 datafile = sys.argv[1]
 runs = np.load(datafile)
-print runs.keys()
+keys = runs.keys()
+keys.sort()
+print keys
 
 
 
 data = runs["data"]
 L_list = runs["L"]
 T_list = runs["T"]
-
+print runs["omega"]
 datadict = {}
 
 print data.shape
@@ -83,7 +85,7 @@ for i,L in enumerate(L_list):
 
 	key = (L,"$L={}$".format(int(L)))
 
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,0,:]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,0,0]))
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
 
 	datadict[key] = d
@@ -93,7 +95,7 @@ for i,L in enumerate(L_list):
 func_e = lambda x:np.sqrt(x)
 func_m2 = lambda x:1/x
 
-exp = [1.8,2.0,2.2]
+exp = [0.0,1.8,2.0,2.2,3.0]
 for e in exp:
 	error = False
 	logy = False

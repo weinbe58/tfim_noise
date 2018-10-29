@@ -24,8 +24,7 @@ def get_filedict(filename):
 
 
 
-def get_operators(L):
-	Nb = 2*L
+def get_operators(L,Nb):
 	if Nb%2 == 1:
 		S = "{}/2".format(Nb)
 	else:
@@ -61,7 +60,7 @@ data_dict = {}
 list_dict = {}
 oper_dict = {}
 
-oper_keys = ["L"]
+oper_keys = ["L","Nb"]
 
 print filelist
 
