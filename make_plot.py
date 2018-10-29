@@ -85,8 +85,8 @@ for i,L in enumerate(L_list):
 
 	key = (L,"$L={}$".format(int(L)))
 
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,0,0]))
-	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,:]))
+	# d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,0,0]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,:,0,0,:]))
 
 	datadict[key] = d
 
@@ -100,9 +100,7 @@ for e in exp:
 	error = False
 	logy = False
 	logx = True
-	plot(datadict,"{}_m2_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$"
-		,error=error,xscale=e,logx=logx,logy=logy)
+	plot(datadict,"{}_m2_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,"$vL^{{{}}}$".format(e),"$m^2(v,L)$",error=error,xscale=e,logx=logx,logy=logy)
 
 	# logy = True
-	# plot(datadict,"{}_e_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$"
-	# 	,error=error,xscale=e,logx=logx,logy=logy)
+	plot(datadict,"{}_e_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,"$vL^{{{}}}$".format(e),"$Q(v,L)/L$",error=error,xscale=e,logx=logx,logy=logy)
