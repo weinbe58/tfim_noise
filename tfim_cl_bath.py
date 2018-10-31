@@ -42,7 +42,7 @@ def t_field_local_1d(yin,h,out):
         out[i] = me
 
 
-def SO(t,yin,yout,T,gamma,omegas,work,J_func,h_func,No,L):
+def SO(t,yin,yout,T,gamma,omegas,omegas2,damp,work,J_func,h_func,No,L):
     J = J_func(t,T)
     h = h_func(t,T)
 
@@ -56,11 +56,11 @@ def SO(t,yin,yout,T,gamma,omegas,work,J_func,h_func,No,L):
     psi_out = yout[L*No:].reshape((2*L,L))
 
     t_field_local_1d(psi_in,h,out)
+    eta_out.real[:] = eta_in.imag[:]
+    eta_out.imag[:] = -omegas2.T*eta_in.real[:] - gamma*out - damp*eta_in.imag[:]
 
-    eta_out[:] = -1j * gamma * out
-    np.multiply(omegas,t,out=work)
-    np.cos(work,out=work)
-    h += gamma * np.einsum("ij,ji->i",work,eta_in.real)
+
+    h += gamma * eta_in.real.sum(axis=0)
     hamiltonian_1d(psi_in,psi_out,J,h)
 
     psi_out *= -2j
@@ -70,10 +70,13 @@ def SO(t,yin,yout,T,gamma,omegas,work,J_func,h_func,No,L):
 
 
 
-L = 8*8
-T = 1000
+
+
+L = 16
+T = 10*L**2
 No = 1000
 gamma = 0.01
+damp = 10.0
 J0 = -np.ones(L)
 
 J_func = lambda t,T:J0*(t/T)**2
@@ -84,6 +87,7 @@ eta0 = np.random.normal(0,1,size=(No,L))+1j*np.random.normal(0,1,size=(No,L))
 eta0 *= (0.5/np.linalg.norm(eta0,axis=0))
 
 omegas = np.random.uniform(0,1,size=(L,No))
+omegas2 = omegas**2
 work = np.zeros_like(omegas)
 
 
@@ -103,7 +107,7 @@ psi0 = np.array(V[:,:L],dtype=np.complex128,copy=True)
 y0 = np.hstack((eta0.ravel(),psi0.ravel()))
 yout = np.zeros_like(y0)
 
-f_params = (yout,T,gamma,omegas,work,J_func,h_func,No,L)
+f_params = (yout,T,gamma,omegas,omegas2,damp,work,J_func,h_func,No,L)
 yf = evolve(y0,0,T,SO,f_params=f_params,solver_name="dop853",atol=1.1e-15,rtol=1.1e-15)
 
 

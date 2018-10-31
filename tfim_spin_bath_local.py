@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 def anneal_bath(L,T,gamma=0.01,path="."):
 	ti = time.time()
-	filename = os.path.join(path,"spin_bath_exact_model4_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
+	filename = os.path.join(path,"spin_bath_exact_L_{}_T_{}_gamma_{}.npz".format(L,T,gamma))
 	if os.path.isfile(filename):
 		print "file_exists...exiting run."
 		exit()
