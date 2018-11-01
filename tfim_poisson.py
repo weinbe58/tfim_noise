@@ -16,7 +16,7 @@ def z_term(hz,i,field):
         field[k] += hz*(((k>>i)&1)<<1)-1
 
 @jit(nopython=True)
-def defect(yin,yout,alpha,site):
+def pauli_local(yin,yout,alpha,site):
     if alpha == 0:
         for s in range(yin.size):
             yout[s] = yin[s^(1<<site)]
@@ -96,7 +96,7 @@ def poisson_ramp(N,T,H_ising,gamma,process):
         if solver.successful():
             psi_out[:] = solver.y.view(np.complex128)
             psi_out /= np.linalg.norm(psi_out)
-            defect(psi_out,solver.y.view(np.complex128),alpha,site)
+            pauli_local(psi_out,solver.y.view(np.complex128),alpha,site)
         else:
             raise RuntimeError("error code {}".format(solver.get_return_code()))
 

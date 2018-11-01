@@ -20,6 +20,7 @@ def plot(L,Nb,gamma,omega):
 	print "L={}, H-space size: {}".format(L,basis.Ns)
 
 	bath_energy_2=[[-omega/Nb,0,0]]
+	bath_energy_1=[[-omega/Nb,0]]
 	SB_1_list = [[-gamma/Nb,i,0] for i in range(L)]
 	SB_2_list = [[gamma/np.sqrt(Nb),i,0] for i in range(L)]
 	B_h_list = [[-1,0]]
@@ -43,16 +44,28 @@ def plot(L,Nb,gamma,omega):
 	# 			["|zz",bath_energy,A,()],
 	# ]
 
+	# static = [
+	# ]
+	# dynamic = [
+	# 			["x|",h_list,B,()],
+	# 			["|+",B_h_list,B,()],
+	# 			["|-",B_h_list,B,()],
+	# 			["zz|",J_list,A,()],
+	# 			["z|z",SB_1_list,A,()],
+	# 			["|zz",bath_energy_2,A,()],
+	# ]
+
 	static = [
+				["|z",bath_energy_1],
 	]
 	dynamic = [
 				["x|",h_list,B,()],
-				["|+",B_h_list,B,()],
-				["|-",B_h_list,B,()],
+				["-|+",SB_2_list,B,()],
+				["+|-",SB_2_list,B,()],
 				["zz|",J_list,A,()],
-				["z|z",SB_1_list,A,()],
-				["|zz",bath_energy_2,A,()],
+				
 	]
+
 
 	print "creating hamiltonian"
 	kwargs=dict(basis=basis,dtype=np.float64,
@@ -63,7 +76,7 @@ def plot(L,Nb,gamma,omega):
 	times = np.linspace(0,1,301)[1:-1]
 	gaps=[]
 	for t in times:
-		E,V = H.eigsh(k=150,which="SA",time=t,maxiter=100000)
+		E,V = H.eigsh(k=100,which="SA",time=t,maxiter=100000)
 		gaps.append(E-E[0])
 
 	plt.plot(times,gaps,label="L={}".format(L),color="blue")
@@ -72,7 +85,7 @@ def plot(L,Nb,gamma,omega):
 
 
 for L in [8,10,12]:
-	plot(L,L,1,0.01)
+	plot(L,L,1.0,1.0)
 
 plt.legend()
 plt.show()

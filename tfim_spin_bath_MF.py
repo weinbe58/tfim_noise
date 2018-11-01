@@ -86,14 +86,14 @@ def anneal_bath_2(L,Nb,T,gamma=0.2,omega=1.0,path="."):
 
 	A = lambda t:(t/T)**2
 	B = lambda t:(1-t/T)**2
-	C = lambda t:(1-(t/T)**40)**2
+
 	static = [
 			  ["|z",bath_energy],
 			 ]
-	dynamic = [["x|",h_list,B,()],
-			   ["zz|",J_list,A,()],
-			   ["+|-",SB_list,C,()],
-			   ["-|+",SB_list,C,()]
+	dynamic = [["zz|",J_list,A,()],
+			   ["x|",h_list,B,()],
+			   ["+|-",SB_list,B,()],
+			   ["-|+",SB_list,B,()]
 			  ]
 
 	print "creating hamiltonian"
