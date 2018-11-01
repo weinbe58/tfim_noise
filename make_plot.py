@@ -75,7 +75,6 @@ print keys
 data = runs["data"]
 L_list = runs["L"]
 T_list = runs["T"]
-print runs["Nb"]
 datadict = {}
 
 print data.shape
@@ -85,7 +84,7 @@ for i,L in enumerate(L_list):
 
 	key = (L,"$L={}$".format(int(L)))
 
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,1,1]))
+	d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,0,0]))
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,-1,:,0,0]))
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,-1,0,:]))
 

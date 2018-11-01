@@ -7,7 +7,6 @@ from quspin.operators import hamiltonian
 from quspin.tools.evolution import evolve
 import numpy as np
 import cProfile,os,sys
-import matplotlib.pyplot as plt
 from six import itervalues
 
 def get_filedict(filename):
