@@ -32,7 +32,7 @@ def anneal_bath(L,T,gamma=0.01,path="."):
 
 
 	a = 4
-	Jb_list = [[-(gamma/2.0)*(1.0/(1+np.abs(i-j))**a+1.0/(L+np.abs(i-j))**a),i,L+(i+j)%L] 
+	Jb_list = [[-(gamma/2.0)*(1.0/(np.abs(i-j))**a+1.0/(L+np.abs(i-j))**a),i,L+(i+j)%L] 
 					for i in range(L) for j in range(L) if j!=i]
 
 	Jb_list += [[-gamma,i,i+L] for i in range(L)]
