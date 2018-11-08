@@ -1,4 +1,4 @@
-from numba import jit,uint64
+from numba import jit,uint64,prange
 import numpy as np
 from quspin.tools.evolution import evolve
 from scipy.integrate import solve_ivp
@@ -57,14 +57,29 @@ def _2d_diagonal(yin,yout,diag_signs,J):
 
         yout[i] += ME*yin[i]
 
-@jit
-def _SE_2d(t,psi_in,psi_out,diag_signs,J_func,h_func):
+@jit(nopython=True,parallel=True)
+def _2d_H_op(yin,yout,diag_signs,J,h):
+    N = h.shape[0]
+    Nd = J.shape[0]
+    Ns = diag_signs.shape[0]
+    for i in prange(Ns):
+        diag = 0
+        for j in range(Nd):
+            diag += J[j]*diag_signs[i,j]
 
+        b = uint64(1) # use this number fo flip bit to get column index
+        ME = 0
+        for j in range(N):
+            ME += h[j]*yin[i^b] # x-field action
+            b <<= 1 # shift flipping fit to the right
+
+        yout[i] = diag*yin[i] + ME
+
+
+def _SE_2d(t,psi_in,psi_out,diag_signs,J_func,h_func):
     J = 1j*J_func(t)
     h = 1j*h_func(t)
-    psi_out[:] = 0.0
-    _2d_diagonal(psi_in,psi_out,diag_signs,J)
-    _2d_x_field(psi_in,psi_out,h)
+    _2d_H_op(psi_in,psi_out,diag_signs,J,h)
 
     return psi_out # return view of complex array as double for ode solver. 
 
@@ -155,6 +170,15 @@ class TFIM_2d(object):
     @property
     def left_iter(self):
         return iter(self._left_iter)
+
+    @property
+    def bond_iter(self):
+        for i,j in self._left_iter:
+            yield i,j
+        
+        for i,j in self._up_iter:
+            yield i,j
+    
 
     def dot(self,psi_in,J,h,psi_out=None):
         if psi_out is None:

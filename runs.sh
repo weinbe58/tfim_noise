@@ -25,7 +25,7 @@ for t in ${T[*]}; do
     # python tfim_spin_bath_MF.py $N $((N)) $t 0.1 0.1 4 runfiles/1d_model_spin_bath_4/ &
     # python tfim_spin_bath_MF.py $N $((4*N)) $t $gamma 0.01 3 runfiles/1d_model_spin_bath_3/ &
     # python tfim_spin_bath_MF.py $N $((4*N)) $t $gamma $omega 3 runfiles/1d_model_spin_bath_3/ &
-    python tfim_spin_bath_MF.py $N $((N)) $t 1.0 $omega 2 runfiles/1d_model_spin_bath_2/ &
+    # python tfim_spin_bath_MF.py $N $((N)) $t 1.0 $omega 2 runfiles/1d_model_spin_bath_2/ &
     # python tfim_spin_bath_MF.py $N $N $t 1.0 1.0 1 runfiles/1d_model_spin_bath_1/ &
     pids+=($!)
 done

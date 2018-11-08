@@ -1,67 +1,79 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from matplotlib.lines import Line2D
 import numpy as np
 import glob,sys,os
 
 
-def color_list(i):
-	col=['red','green','blue','fuchsia','yellow','orange','purple','gray','aqua','lime','maroon','teal','navy','black' , 'olive','silver','lawngreen','dodgerblue','MediumSpringGreen','DarkOrange']     
-	j=i % len(col)
-	return col[j]
-
-def fill_marker(i):
-	m = len(Line2D.filled_markers)
-	j=i % m
-	return Line2D.filled_markers[j]
+def marker_style(i):
+	color = ['red','green','blue','fuchsia','yellow','orange','aqua','lime','teal']
+	n_color = len(color)
+	n_marker = len(Line2D.filled_markers)
 
 
-def plot(datadict,figname,ncol,xlabel,ylabel,error=True,keys=None,logx=True,logy=False,legend_opts={},xscale=0.0,yscale=0.0,yshift=None,xshift=None,xlim=None,ylim=None,legend=True,func=None):
-	plt.clf()
+	markers = Line2D.filled_markers
+	fillstyle = ["full","none","top","bottom","left","right"]
+
+	j = i % n_color
+	jj = (i // n_color) % len(fillstyle)
+
+	return dict(color=color[j],marker=markers[j],fillstyle=fillstyle[jj])
+
+
+def plot(ax,filedict,ncol,ecol=None,xlabel=None,ylabel=None,keys=None,logx=True,logy=False,legend_opts={},
+	xscale=0.0,yscale=0.0,yshift=None,xshift=None,xlim=None,ylim=None,legend=False,error=True):
+
+
+
 	if xshift is None:
 		xshift = lambda v,L:0.0
 	if yshift is None:
 		yshift = lambda v,L:0.0
 
 	if keys is None:
-		keys = datadict.keys()
+		keys = filedict.keys()
 		keys.sort(key=lambda x:x[0])
 
 	for i,key in enumerate(keys):
 		L,label = key
-		data = datadict[key]
-		v = 1.0/data[:,0]
+		data =filedict[key]
+		v = data[:,0]
+		y = (data[:,ncol]-yshift(v,L))*L**yscale
+		x = (v-xshift(v,L))*L**xscale
 		if error:
-			plt.errorbar((v-xshift(v,L))*L**xscale,(data[:,ncol]-yshift(v,L))*L**yscale,data[:,ncol+1]*L**yscale,marker=fill_marker(i),
-				color=color_list(i),label=label)
+			err = data[:,ecol]*L**yscale
+			ax.errorbar(x,y,err,label=label,markersize=3,linewidth=1,**marker_style(i))
 		else:
-			plt.plot((v-xshift(v,L))*L**xscale,(data[:,ncol]-yshift(v,L))*L**yscale,marker=fill_marker(i),
-				color=color_list(i),label=label)
-
+			ax.plot(x,y,label=label,markersize=3,linewidth=1,**marker_style(i))
 
 	if logx:
-		plt.xscale("log", nonposx='clip')
+		ax.set_xscale("log", nonposx='clip')
+		ax.xaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=15))
 	if logy:
-		plt.yscale("log", nonposy='clip')
+		ax.set_yscale("log", nonposy='clip')
+		ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=15))
 
-	xmin,xmax = plt.gca().get_xlim()
-	ymin,ymax = plt.gca().get_ylim()
-
-	if func is not None:
-		xx = np.linspace(xmin,xmax,10001)
-		plt.plot(xx,func(xx),linestyle=":",color=color_list(len(keys)),marker="")
-
-	plt.xlim(xmin,xmax)
-	plt.ylim(ymin,ymax)
+	if xlabel is not None:
+		ax.set_xlabel(xlabel,fontsize=10)
+	if ylabel is not None:
+		ax.set_ylabel(ylabel,fontsize=10)
+	if xlim is not None:
+		ax.set_xlim(xlim)
+	if ylim is not None:
+		ax.set_ylim(ylim)
 
 	if legend:
-		plt.legend(**legend_opts)
-	plt.xlabel(xlabel,fontsize=16)
-	plt.ylabel(ylabel,fontsize=16)
-	if xlim is not None:
-		plt.xlim(xlim)
-	if ylim is not None:
-		plt.ylim(ylim)
-	plt.savefig(figname,dpi=1000)
+		ax.legend(**legend_opts)
+
+
+	for tick in ax.xaxis.get_major_ticks():
+		tick.label.set_fontsize(7) 
+
+	for tick in ax.yaxis.get_major_ticks():
+		tick.label.set_fontsize(7) 
+
+	ax.tick_params(axis="both",which="both",direction="in")
+
 
 
 datafile = sys.argv[1]
@@ -79,31 +91,58 @@ datadict = {}
 
 print data.shape
 for i,L in enumerate(L_list):
-	if L < 10:
+	if L < 14:
 		continue
 
 	key = (L,"$L={}$".format(int(L)))
+	mask = T_list > 10
 
-	d = np.hstack((np.atleast_2d(T_list).T,data[i,i,:,0,0]))
+	d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,i,mask,1,0]))
 	# d = np.hstack((np.atleast_2d(T_list).T,data[i,-1,:,0,0]))
-	# d = np.hstack((np.atleast_2d(T_list).T,data[i,:,-1,0,:]))
+	# d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,mask,-1,0,:]))
 
 
 	datadict[key] = d
 
+# Two subplots, the axes array is 1-d
+width = 3.39
+height =  1.5*width
+
+f, (ax1,ax2) = plt.subplots(2,figsize=(width,height))
+
+options = dict(logy=False,logx=True,error=False,xlabel="$vL^2$",
+	ylabel="$Q(v,L)$",xscale=2,yscale=0.0)
+
+plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
 
 
-func_e = lambda x:np.sqrt(x)
-func_m2 = lambda x:1/x
+options["ylabel"] = "$m^2(v,L)$"
+options["yscale"] = 0.0
+plot(ax2,datadict,2,**options)
+f.text(0.025,0.95,"$(a)$",fontsize=12)
+f.text(0.025,0.465,"$(b)$",fontsize=12)
+plt.tight_layout()
 
-exp = [0.0,1.0,2.0,2*(1+1.0/3.0),3.0]
-for e in exp:
-	error = False
-	logy = False
-	logx = True
-	plot(datadict,"{}_m2_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),2,
-		"$vL^{{{}}}$".format(e),"$m^2(v,L)$",error=error,xscale=e,logx=logx,logy=logy)
+f.savefig(os.path.join(".","model_scale_2.pdf"),bbox_inches="tight")
+plt.clf()
 
-	# logy = True
-	plot(datadict,"{}_e_{}.png".format(".".join(os.path.split(datafile)[-1].split(".")[:-1]),e),1,
-		"$vL^{{{}}}$".format(e),"$Q(v,L)/L$",error=error,xscale=e,logx=logx,logy=logy,func=func_e)
+# Two subplots, the axes array is 1-d
+width = 3.39
+height =  1.5*width
+
+f, (ax1,ax2) = plt.subplots(2,figsize=(width,height))
+
+options = dict(logy=False,logx=True,error=False,xlabel="$vL^3$",
+	ylabel="$Q(v,L)$",xscale=3,yscale=0.0)
+
+plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
+
+
+options["ylabel"] = "$m^2(v,L)$"
+options["yscale"] = 0.0
+plot(ax2,datadict,2,**options)
+f.text(0.025,0.95,"$(a)$",fontsize=12)
+f.text(0.025,0.465,"$(b)$",fontsize=12)
+plt.tight_layout()
+
+f.savefig(os.path.join(".","model_scale_3.pdf"),bbox_inches="tight")
