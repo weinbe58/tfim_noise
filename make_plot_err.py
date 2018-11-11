@@ -85,37 +85,18 @@ print keys
 
 
 data = runs["data"]
-
-if "L" in runs:
-	L_list = runs["L"]
-elif "size" in runs:
-	L_list = runs["size"]
-
+L_list = runs["L"]
 T_list = runs["T"]
 datadict = {}
 
 print data.shape
 for i,L in enumerate(L_list):
-	try:
-		n,m = L
-		print n,m
-		if n == 0:
-			key = (m,"$L={}$".format(int(m)))
-		else:
-			key = (np.sqrt(n**2+m**2),r"$L=\sqrt{{{}}}$".format(n**2+m**2))
+	# if L < 10: continue
 
-		mask = T_list > 0
-		d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,mask,0,0,i]))
-	except TypeError:
-		if L < 10: continue
-		key = (L,"$L={}$".format(int(L)))
+	key = (L,"$L={}$".format(int(L)))
+	mask = T_list > 0
 
-
-		mask = T_list > 0
-
-		d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,i,mask,0,0]))
-		# d = np.hstack((np.atleast_2d(1/T_list).T,data[i,mask,0]))
-		# d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,mask,-1,0,:]))
+	d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[0,i,0,mask]))
 
 
 	datadict[key] = d
@@ -126,7 +107,7 @@ height =  1.5*width
 
 f, (ax1,ax2) = plt.subplots(2,figsize=(width,height))
 
-options = dict(logy=False,logx=True,xlabel="$vL^2$",
+options = dict(logy=False,logx=True,ecol=2,xlabel="$vL^2$",
 	ylabel="$Q(v,L)$",xscale=2,yscale=0.0)
 
 plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
@@ -134,45 +115,11 @@ plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
 
 options["ylabel"] = "$m^2(v,L)$"
 options["yscale"] = 0.0
-plot(ax2,datadict,2,**options)
+options["ecol"] = 4
+plot(ax2,datadict,3,**options)
 f.text(0.025,0.95,"$(a)$",fontsize=12)
 f.text(0.025,0.465,"$(b)$",fontsize=12)
 plt.tight_layout()
 
 f.savefig(os.path.join(".","model_scale_2.pdf"),bbox_inches="tight")
 plt.clf()
-
-# Two subplots, the axes array is 1-d
-width = 3.39
-height =  1.5*width
-xscale = 3.0
-
-f, (ax1,ax2) = plt.subplots(2,figsize=(width,height))
-
-options = dict(logy=False,logx=True,xlabel="$vL^3$",
-	ylabel="$Q(v,L)$",xscale=xscale,yscale=-1.0)
-
-plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
-
-
-
-options["ylabel"] = "$m^2(v,L)$"
-options["logy"] = True
-plot(ax2,datadict,2,**options)
-
-
-xmin,xmax = ax2.get_xlim()
-ymin,ymax = ax2.get_ylim()
-
-
-# x = np.linspace(xmin,xmax,1000)
-# ax2.plot(x,x**(-xscale),label="linear")
-# ax2.set_ylim(ymin,ymax)
-
-
-
-f.text(0.025,0.95,"$(a)$",fontsize=12)
-f.text(0.025,0.465,"$(b)$",fontsize=12)
-plt.tight_layout()
-
-f.savefig(os.path.join(".","model_scale_3.pdf"),bbox_inches="tight")
