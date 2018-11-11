@@ -91,14 +91,13 @@ datadict = {}
 
 print data.shape
 for i,L in enumerate(L_list):
-	if L < 14:
-		continue
+	if L < 10: continue
 
 	key = (L,"$L={}$".format(int(L)))
-	mask = T_list > 10
+	mask = T_list > 0
 
-	d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,i,mask,1,0]))
-	# d = np.hstack((np.atleast_2d(T_list).T,data[i,-1,:,0,0]))
+	d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,i,mask,0,0]))
+	# d = np.hstack((np.atleast_2d(1/T_list).T,data[i,mask,0]))
 	# d = np.hstack((np.atleast_2d(1.0/T_list[mask]).T,data[i,mask,-1,0,:]))
 
 
@@ -132,11 +131,17 @@ height =  1.5*width
 
 f, (ax1,ax2) = plt.subplots(2,figsize=(width,height))
 
-options = dict(logy=False,logx=True,error=False,xlabel="$vL^3$",
-	ylabel="$Q(v,L)$",xscale=3,yscale=0.0)
+options = dict(logy=True,logx=True,error=False,xlabel="$vL^3$",
+	ylabel="$Q(v,L)$",xscale=1,yscale=0.0)
 
 plot(ax1,datadict,1,legend=True,legend_opts=dict(ncol=1,fontsize=6),**options)
 
+xmin,xmax = ax1.get_xlim()
+ymin,ymax = ax1.get_ylim()
+
+
+x = np.linspace(xmin,xmax,1000)
+ax1.plot(x,10*np.sqrt(x),label="linear")
 
 options["ylabel"] = "$m^2(v,L)$"
 options["yscale"] = 0.0

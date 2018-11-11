@@ -26,21 +26,20 @@ def get_filedict(filename):
 
 def get_operators(L):
 	N = 2*L
-	Z = -(np.arange(N)+1)
 	Tx = (np.arange(L)+1)%L
 	Tx = np.hstack((Tx,Tx+L))
 
 	P = np.arange(L)[::-1]
 	P = np.hstack((P,P+L))
 
-	basis = spin_basis_general(N,pauli=True,pblk=(P,0),kblk=(Tx,0),zblk=(Z,0))
+	basis = spin_basis_general(N,pauli=True,pblk=(P,0),kblk=(Tx,0))
 
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
 	M_list = [[1.0/L**2,i,j] for i in range(L) for j in range(L)]
 
 	kwargs=dict(basis=basis,dtype=np.float64,
 		check_symm=False,check_pcon=False,check_herm=False)
-	print basis.N//L
+	print basis.N
 	H_S = hamiltonian([["zz",J_list]],[],**kwargs)
 	M2 = hamiltonian([["zz",M_list]],[],**kwargs)
 

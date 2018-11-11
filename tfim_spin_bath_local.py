@@ -13,40 +13,45 @@ def anneal_bath(L,T,gamma=0.01,path="."):
 		print "file_exists...exiting run."
 		exit()
 	N = 2*L
-	Z = -(np.arange(N)+1)
+
 	Tx = (np.arange(L)+1)%L
 	Tx = np.hstack((Tx,Tx+L))
 
 	P = np.arange(L)[::-1]
 	P = np.hstack((P,P+L))
 
-
 	print "creating basis"
-	basis = spin_basis_general(N,pauli=True,pblk=(P,0),
-								kblk=(Tx,0),zblk=(Z,0))
+	basis = spin_basis_general(N,pblk=(P,0),kblk=(Tx,0))
 	print "L={}, H-space size: {}".format(L,basis.Ns)
 
 	Jzz_list = [[-1,i,(i+1)%L] for i in range(L)]
-	Jzz_list += [[-0.01,L+i,L+(i+1)%L] for i in range(L)]
-	Jzz_list += [[-0.01,i,L+i] for i in range(L)]
+	hx_list = [[-1,i] for i in range(L)]
+
+	hop_bath_list = [[-1.0,L+i,L+(i+1)%L] for i in range(L)]
+	hop_bath_list += [[-1.0,L+i,L+(i+1)%L] for i in range(L)]
+	int_2_list = [[1.0,L+i,L+(i+1)%L] for i in range(L)]
+	int_2_list += [[1.0,L+i,L+(i+2)%L] for i in range(L)]
+	int_1_list = [[2.0,L+i] for i in range(L)]
 
 
-	a = 4
-	Jb_list = [[-(gamma/2.0)*(1.0/(np.abs(i-j))**a+1.0/(L+np.abs(i-j))**a),i,L+(i+j)%L] 
-					for i in range(L) for j in range(L) if j!=i]
+	bath_sys_list = [[gamma,i,i+L] for i in range(L)]
 
-	Jb_list += [[-gamma,i,i+L] for i in range(L)]
-
-	h_list = [[-1,i] for i in range(2*L)]
+	Jb_list = [[gamma,i,L+i] for i in range(L)]
 
 	A = lambda t:(t/T)**2
 	B = lambda t:(1-t/T)**2
-	C = lambda t:(4*(1-t/T)*(t/T))**2
 
-	static = []
-	dynamic = [["zz",Jzz_list,A,()],["x",h_list,B,()],
-				["xx",Jb_list,C,()],["yy",Jb_list,C,()],
-				# ["zz",Jb_list,C,()]
+	static = [
+				["+-",hop_bath_list],
+				["-+",hop_bath_list],
+				["zz",int_2_list],
+				["z",int_1_list]
+				]
+	dynamic = [
+				["zz",Jzz_list,A,()],
+				["x",hx_list,B,()],
+				["+-",bath_sys_list,B,()],
+				["-+",bath_sys_list,B,()],
 				]
 
 	kwargs=dict(basis=basis,dtype=np.float64,
@@ -74,7 +79,6 @@ def anneal_bath(L,T,gamma=0.01,path="."):
 	print "saving"
 	np.savez_compressed(filename,psi=psi_f)
 	print "dome.... {} sec".format(time.time()-ti)
-
 
 
 L = int(sys.argv[1])
