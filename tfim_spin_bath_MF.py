@@ -104,17 +104,14 @@ def anneal_bath_2(L,Nb,T,gamma=0.2,omega=1.0,path="."):
 	E0,psi_0 = H.eigsh(k=1,which="SA",time=0)
 	psi_0 = psi_0.ravel()
 
-	pr = cProfile.Profile()
-	pr.enable()
 	print "evolving"
 	out = np.zeros(psi_0.shape,dtype=np.complex128)
 	psi_f = evolve(psi_0,0,T,H._hamiltonian__omp_SO,f_params = (out,),
 		solver_name="dop853",atol=1.1e-10,rtol=1.1e-10)
-	pr.disable()
-	pr.print_stats(sort='time')
 
+	psi_f /= np.linalg.norm(psi_f)
 	print "saving"
-	# np.savez_compressed(filename,psi=psi_f)
+	np.savez_compressed(filename,psi=psi_f)
 	print "dome......{} sec".format(time.time()-ti)
 
 
