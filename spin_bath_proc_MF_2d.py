@@ -64,7 +64,8 @@ def get_operators(size,Nb):
 	J_list = [[-1.0,i,Tx[i]] for i in range(N)]
 	J_list.extend([-1.0,i,Ty[i]] for i in range(N))
 
-	M_list = [[1.0/N**2,i,j] for i in range(N) for j in range(N)]
+	M_list = [[1.0/N**2,i,i] for i in range(N)]
+	M_list += [[2.0/N**2,i,j] for i in range(N) for j in range(N) if i > j]
 
 	kwargs=dict(basis=basis,dtype=np.float64,
 		check_symm=False,check_pcon=False,check_herm=False)
@@ -93,6 +94,13 @@ oper_dict = {}
 oper_keys = ["size","Nb"]
 
 print filelist
+
+def sorter(filename):
+	filedict = get_filedict(filename)
+	return filedict["size"][0]**2+filedict["size"][1]**2
+
+
+filelist.sort(key=sorter)
 
 if filelist:
 	for filename in filelist:

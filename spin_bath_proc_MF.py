@@ -33,7 +33,9 @@ def get_operators(L,Nb):
 	bath_basis = spin_basis_1d(1,S=S)
 	basis = tensor_basis(spin_basis,bath_basis)
 	J_list = [[-1,i,(i+1)%L] for i in range(L)]
-	M_list = [[1.0/L**2,i,j] for i in range(L) for j in range(L)]
+	M_list = [[1.0/L**2,i,i] for i in range(L)]
+	M_list += [[2.0/L**2,i,j] for i in range(L) for j in range(L) if i > j]
+
 
 	kwargs=dict(basis=basis,dtype=np.float64,
 		check_symm=False,check_pcon=False,check_herm=False)
