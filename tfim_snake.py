@@ -55,7 +55,7 @@ def J_ramp(t,T):
 def h_ramp(t,T):
 	return np.exp(-t/(0.3*T))*(1-t/T)**2
 
-def get_samples(Nsamples,omega_min=2.5e-7,omega_max=1,alpha=-0.75):
+def get_samples(Nsamples,omega_min=2.5e-7,omega_max=1,alpha=-0.325):
 	def C(omega,omega_min,omega_max,alpha):
 		return (omega_min**(1+alpha)-omega**(1+alpha))/(omega_min**(1+alpha)-omega_max**(1+alpha))
 

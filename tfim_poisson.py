@@ -33,7 +33,7 @@ def H(t,psi_in,psi_out,H_ising,T,pg):
     # print np.linalg.norm(psi_in)
     J = (t/T)**2
     h = (1-t/T)**2
-    r = np.exp(-(10*(t-T)/T)**2)
+    r = (1-t/T)**2
     for s in prange(psi_in.size):
         b = uint64(1) # use this number fo flip bit to get column index
         ME = (-1j*pg*r + J*H_ising[s])*psi_in[s] 
@@ -63,7 +63,7 @@ def generate_process(gamma,N,tmax):
         if t > tmax:
             break
 
-        if np.random.ranf() <= np.exp(-(10*(t-T)/T)**2):
+        if np.random.ranf() <= (1-t/T)**2:
             p = gamma/gamma.sum()
             i = np.random.choice(np.arange(3*N),p=p.ravel())
             site = i//3
@@ -124,7 +124,7 @@ N_anneal = int(sys.argv[4])
 path = sys.argv[5]
 
 gamma_arr = np.full((Lx,3),gamma,dtype=np.float64)
-gamma_arr[:,:2] = 0
+# gamma_arr[:,:2] = 0
 
 
 up_iter = [(i+Lx*j,i+Lx*(j+1)) for i in range(Lx) for j in range(Ly-1)]
@@ -134,7 +134,7 @@ left_iter = [(i+Lx*j,(i+1)+Lx*j) for i in range(Lx-1) for j in range(Ly)]
 J_list = [[-1,i,j] for i,j in up_iter]
 J_list.extend([[-1,i,j] for i,j in left_iter])
 
-M_list = [[1.0,i,j] for i in range(N) for j in range(N)]
+M_list = [[1.0/N**2,i,j] for i in range(N) for j in range(N)]
 
 
 H_ising = np.zeros(2**N,dtype=np.int8)
@@ -142,8 +142,8 @@ for J,i,j in J_list:
     ising_term(J,i,j,H_ising)
 
 M2 = np.zeros(2**N,dtype=np.float64)
-for _,i,j in M_list:
-    ising_term(1.0/N**2,i,j,M2)
+for C,i,j in M_list:
+    ising_term(C,i,j,M2)
 
 psi_f_np = poisson_ramp(N,T,H_ising,gamma_arr,())
 
